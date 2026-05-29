@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next GB Auto Import - Cotizador Pro</title>
+    <style>
+        /* =========================================================
+           VARIABLES Y ESTILOS DE INTERFAZ (PANTALLA)
+           ========================================================= */
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --primary: #1d4ed8;
+            --border: #e2e8f0;
+            --accent: #2563eb;
+            --wa: #25D366;
+            --danger: #ef4444;
+        }
+
+        .dark-mode {
+            --bg: #0b0f19;
+            --card: #111827;
+            --text: #f9fafb;
+            --text-secondary: #9ca3af;
+            --primary: #3b82f6;
+            --border: #374151;
+            --accent: #60a5fa;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            transition: background 0.3s, color 0.3s; 
+            margin: 0; 
+            padding: 40px 20px; 
+        }
+
+        .app-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            display: grid; 
+            grid-template-columns: 1.2fr 1fr; 
+            gap: 40px; 
+        }
+
+        .card { 
+            background: var(--card); 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02); 
+            border: 1px solid var(--border); 
+        }
+
+        .logo-container { text-align: center; margin-bottom: 25px; }
+        .logo-svg { width: 260px; height: auto; }
+
+        h1 { 
+            margin-top: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text);
+            border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 25px; 
+        }
+
+        .input-group { margin-bottom: 18px; }
+        label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px; }
+        input, select { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: inherit; font-size: 14px; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
+        input:focus, select:focus { border-color: var(--accent); }
+
+        .theme-switch { position: fixed; top: 20px; right: 20px; cursor: pointer; background: var(--card); color: var(--text); padding: 10px 18px; border-radius: 50px; border: 1px solid var(--border); font-weight: 600; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); z-index: 100; }
+        
+        .quote-info-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px;
+        }
+        .info-item { display: flex; flex-direction: column; }
+        .info-item span { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 3px; }
+        .info-item strong { font-size: 13px; color: var(--text); word-break: break-all; }
+
+        .res-line { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
+        .res-line span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
+        .subtotal-line { font-weight: 700; border-bottom: 1px solid var(--text); padding-top: 14px; }
+
+        .total-box { 
+            margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 14px; text-align: center; 
+        }
+        .dark-mode .total-box { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .total-box small { text-transform: uppercase; letter-spacing: 2px; font-size: 11px; display: block; margin-bottom: 5px; opacity: 0.8; }
+        .total-box h2 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+
+        .btn-action { background: var(--text); color: var(--card); border: none; padding: 14px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 13px; transition: opacity 0.2s; }
+        .btn-action:hover { opacity: 0.9; }
+        .btn-wa { background: var(--wa); color: #ffffff; }
+
+        /* DB Control Styling */
+        .db-panel { margin-top: 25px; padding-top: 20px; border-top: 2px dashed var(--border); }
+        .db-flex { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; background: var(--bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border); flex-wrap: wrap;}
+        .db-btns { display: flex; gap: 8px; }
+        .btn-small { padding: 8px 14px; font-size: 11px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold; color: white; }
+        .btn-update { background: var(--accent); }
+        .btn-clear { background: var(--danger); }
+
+        /* =========================================================
+           DISEÑO DE IMPRESIÓN PROFESIONAL
+           ========================================================= */
+        @media print {
+            body { background: #ffffff !important; color: #000000 !important; padding: 0 !important; font-size: 11pt !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .no-print { display: none !important; }
+            .app-container { display: block; width: 100%; }
+            .card { border: none !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; }
+            .logo-container { text-align: left; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #1e293b; padding-bottom: 15px; }
+            .logo-svg { width: 220px !important; }
+            .logo-text-next { fill: #1e293b !important; }
+            .print-header-meta { display: block !important; text-align: right; font-size: 9pt; color: #475569; line-height: 1.5; }
+            .quote-info-box { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; grid-template-columns: repeat(2, 1fr) !important; padding: 15px !important; margin-top: 20px; }
+            .quote-info-box .info-item strong { color: #000000 !important; font-size: 11pt !important; }
+            h1 { text-align: center !important; font-size: 13pt !important; border: none !important; margin-top: 25px !important; margin-bottom: 15px !important; color: #1e293b !important; text-decoration: underline; }
+            .res-line { border-bottom: 1px solid #e2e8f0 !important; padding: 10px 5px !important; }
+            .subtotal-line { font-weight: 800 !important; border-bottom: 2px solid #1e293b !important; background-color: #f8fafc !important; padding: 10px 5px !important; }
+            .total-box { background: #1e293b !important; color: #ffffff !important; border-radius: 12px !important; box-shadow: none; margin-top: 25px !important; padding: 20px !important; }
+            .total-box h2 { color: #ffffff !important; font-size: 26pt !important; }
+            .print-footer { display: block !important; margin-top: 50px; }
+            .print-signatures { display: flex; justify-content: space-around; margin-bottom: 40px; }
+            .sig-line { border-top: 1px solid #1e293b; width: 220px; text-align: center; padding-top: 8px; font-weight: bold; font-size: 9pt; color: #1e293b; }
+            .legal-disclaimer { font-size: 8pt; color: #64748b; text-align: justify; border-top: 1px solid #e2e8f0; padding-top: 15px; line-height: 1.4; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="theme-switch no-print" onclick="document.body.classList.toggle('dark-mode')">🌓 Cambiar Interfaz</button>
+
+<div class="app-container">
+    <div class="card no-print">
+        <h1>Entrada de Inventario</h1>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="input-group">
+                <label>Nombre del Cliente</label>
+                <input type="text" id="cliente" placeholder="Ej. Juan Pérez" oninput="calc()">
+            </div>
+            <div class="input-group">
+                <label>VIN / Chasis</label>
+                <input type="text" id="vin" placeholder="Ej. 17 dígitos" maxlength="17" oninput="calc()">
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="input-group">
+                <label>Marca</label>
+                <select id="marca" onchange="updateModels()"><option value="">Seleccione...</option></select>
+            </div>
+            <div class="input-group">
+                <label>Modelo</label>
+                <select id="modelo" onchange="updateYears()"><option value="">Seleccione...</option></select>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="input-group">
+                <label>Año de Fabricación</label>
+                <select id="anio" onchange="updateVersions()"><option value="">Seleccione...</option></select>
+            </div>
+            <div class="input-group">
+                <label>Versión / Tracción / Origen</label>
+                <select id="version" onchange="setAutoPrice()"><option value="">Seleccione...</option></select>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="input-group">
+                <label>Valor Vehículo (USD$)</label>
+                <input type="number" id="valor" value="0" oninput="calc()">
+            </div>
+            <div class="input-group">
+                <label>Tasa Cambiaria DGA</label>
+                <input type="number" id="tasa" value="60.60" step="0.1" oninput="calc()">
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="input-group">
+                <label>Flete Marítimo (USD$)</label>
+                <input type="number" id="flete" value="790" oninput="calc()">
+            </div>
+            <div class="input-group">
+                <label>Seguro DGA (USD$)</label>
+                <input type="number" id="seguro" value="194.70" oninput="calc()">
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <label>Acuerdo de Arancel</label>
+            <select id="tratado" onchange="calc()">
+                <option value="0">Con Tratado Preferencial (0% Arancel)</option>
+                <option value="0.10" selected>Sin Tratado (10% Gravamen)</option>
+            </select>
+        </div>
+
+        <div class="db-panel">
+            <label>⚙️ Base de Datos Exclusiva (CSV)</label>
+            <div class="db-flex">
+                <span id="db-status" style="font-size: 13px; font-weight: 600;">🔴 Cargando motor...</span>
+                <div class="db-btns">
+                    <button class="btn-small btn-clear" onclick="limpiarDB()" title="Borrar memoria del navegador">Limpiar</button>
+                    <button class="btn-small btn-update" onclick="document.getElementById('csv-file-input').click()">Actualizar CSV</button>
+                </div>
+            </div>
+            <input type="file" id="csv-file-input" accept=".csv" style="display: none;" onchange="handleFileSelect(this)">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
+            <button class="btn-action" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="btn-action btn-wa" onclick="enviarWhatsApp()">📲 Enviar por WhatsApp</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="logo-container">
+            <svg class="logo-svg" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 50 75 Q 130 35 220 40 Q 250 42 280 50 Q 320 52 350 55" fill="none" stroke="#2563eb" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M 120 54 Q 180 43 240 48 Q 290 54 330 54" fill="none" stroke="#2563eb" stroke-width="2" opacity="0.7"/>
+                <defs>
+                    <linearGradient id="metalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <text x="50" y="115" font-family="'Arial Black', Impact, sans-serif" font-size="64" font-weight="900" fill="url(#metalGrad)" letter-spacing="-2" class="logo-text-next">NEXT</text>
+                <text x="52" y="142" font-family="'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="600" fill="#475569" letter-spacing="1.5">GB AUTO <tspan fill="#2563eb">IMPORT</tspan></text>
+            </svg>
+            <div class="print-header-meta">
+                <strong>NEXT GB AUTO IMPORT SRL</strong><br>
+                Santo Domingo, Distrito Nacional<br>
+                info@nextgbautoimport.com | IG: @nextgbautoimport<br>
+                <span id="print-date"></span>
+            </div>
+        </div>
+
+        <div class="quote-info-box">
+            <div class="info-item" id="box-cliente" style="display: none;">
+                <span>Cliente</span>
+                <strong id="lblCliente">--</strong>
+            </div>
+            <div class="info-item">
+                <span>🚘 Vehículo Seleccionado</span>
+                <strong id="lblVehiculo">POR ESPECIFICAR</strong>
+            </div>
+            <div class="info-item" id="box-vin" style="display: none;">
+                <span>VIN / Chasis</span>
+                <strong id="lblVin">--</strong>
+            </div>
+            <div class="info-item">
+                <span>💵 Costo CIF Total</span>
+                <strong id="lblCif" style="color: #2563eb; font-weight: 700;">US$ 0.00</strong>
+            </div>
+        </div>
+
+        <h1>Desglose Oficial de Impuestos RD$</h1>
+        
+        <div class="res-line"><span>Arancel de Aduana (<span id="lblPorcentajeGravamen">10</span>%)</span><span id="rArancel">0.00</span></div>
+        <div class="res-line"><span>ITBIS Liquidación (18%)</span><span id="rItbis">0.00</span></div>
+        <div class="res-line subtotal-line"><span>Total Impuestos Aduanales</span><span id="rSubAduana">0.00</span></div>
+        
+        <div class="res-line" style="margin-top: 10px;"><span>Tasa Servicio Aduanero / DUA</span><span>8,912.44 + 258.26</span></div>
+        <div class="res-line"><span>Parqueo Puerto Sansouci</span><span>5,713.61</span></div>
+        <div class="res-line subtotal-line"><span>⚓ Total Operación de Puerto</span><span id="rTotalPuerto">14,884.31</span></div>
+        
+        <div class="res-line" style="margin-top: 10px;"><span>Primera Placa (17% CIF)</span><span id="rPlaca">0.00</span></div>
+        <div class="res-line"><span>Emisión de CO2 (2% CIF)</span><span id="rCo2">0.00</span></div>
+        <div class="res-line"><span>Marbete Ley</span><span>3,000.00</span></div>
+        <div class="res-line subtotal-line"><span>Total Costos de Placa</span><span id="rSubPlaca">0.00</span></div>
+        
+        <div class="total-box">
+            <small>🏁 Total General Estimado DGA</small>
+            <h2 id="rTotal">0.00</h2>
+        </div>
+
+        <div class="print-footer">
+            <div class="print-signatures">
+                <div class="sig-line">Aceptado por el Cliente</div>
+                <div class="sig-line">Asesor Comercial Next GB</div>
+            </div>
+            <div class="legal-disclaimer">
+                * NOTA FISCAL ADUANERA: Esta simulación representa una estimación de costos basada en las regulaciones de la Dirección General de Aduanas (DGA). Los montos definitivos de Arancel, ITBIS y Placa se liquidarán oficialmente en ventanilla aduanera única en base a la tasa de cambio del día y las tablas de tasación vigentes aplicadas por el inspector asignado al momento físico de la importación en puerto dominicano.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db = {};
+    const fmt = n => new Intl.NumberFormat('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}).format(n);
+
+    document.getElementById('print-date').innerText = 'Fecha: ' + new Date().toLocaleDateString('es-DO');
+
+    function limpiarDB() {
+        if(confirm("¿Estás seguro de borrar la base de datos almacenada? Tendrás que cargar un archivo CSV nuevamente.")){
+            localStorage.removeItem('nextgb_csv_data');
+            location.reload();
+        }
+    }
+
+    function parseCSVLine(text, delimiter) {
+        let parts = [];
+        let insideQuote = false;
+        let currentPart = '';
+        
+        for (let i = 0; i < text.length; i++) {
+            let char = text[i];
+            if (char === '"') {
+                insideQuote = !insideQuote;
+            } else if (char === delimiter && !insideQuote) {
+                parts.push(currentPart.trim());
+                currentPart = '';
+            } else {
+                currentPart += char;
+            }
+        }
+        parts.push(currentPart.trim());
+        return parts;
+    }
+
+    function handleFileSelect(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            localStorage.setItem('nextgb_csv_data', text);
+            processCSV(text);
+        };
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    function processCSV(text) {
+        const lines = text.split(/\r?\n/);
+        if (lines.length < 2) return;
+        
+        let headerLineIndex = 0;
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].toLowerCase().includes('marca') && lines[i].toLowerCase().includes('modelo')) {
+                headerLineIndex = i;
+                break;
+            }
+        }
+        
+        const headerLine = lines[headerLineIndex];
+        let delimiter = ',';
+        if (headerLine.includes(';')) delimiter = ';';
+        else if (headerLine.includes('\t')) delimiter = '\t';
+        
+        const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
+        const idxMarca = headers.findIndex(h => h.includes('marca'));
+        const idxModelo = headers.findIndex(h => h.includes('modelo'));
+        const idxAnio = headers.findIndex(h => h.includes('año') || h.includes('anio'));
+        const idxPais = headers.findIndex(h => h.includes('país') || h.includes('pais'));
+        const idxValor = headers.findIndex(h => h.includes('valor') || h.includes('precio'));
+        const idxEspec = headers.findIndex(h => h.includes('espec'));
+        const idxTraccion = headers.findIndex(h => h.includes('tracci'));
+        
+        if (idxMarca === -1 || idxModelo === -1 || idxAnio === -1) {
+            alert('Error en estructura: El archivo debe tener columnas llamadas Marca, Modelo y Año.');
+            return;
+        }
+        
+        db = {};
+        let totalCount = 0;
+        
+        for (let i = headerLineIndex + 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            const parts = parseCSVLine(line, delimiter);
+            if (parts.length <= Math.max(idxMarca, idxModelo, idxAnio)) continue;
+            
+            const marca = parts[idxMarca];
+            const modelo = parts[idxModelo];
+            const anio = parts[idxAnio];
+            
+            if (!marca || !modelo || !anio) continue;
+            
+            const pais = idxPais !== -1 ? parts[idxPais] : '';
+            const valorRaw = idxValor !== -1 ? parts[idxValor] : '0';
+            const traccion = idxTraccion !== -1 ? parts[idxTraccion] : '';
+            let espec = idxEspec !== -1 ? parts[idxEspec] : '';
+            
+            espec = espec.replace(/\|+$/, '').replace(/^\|+/, '').trim();
+            const valor = parseFloat(valorRaw.replace(/[^0-9.-]+/g, '')) || 0;
+            
+            if (!db[marca]) db[marca] = {};
+            if (!db[marca][modelo]) db[marca][modelo] = {};
+            if (!db[marca][modelo][anio]) db[marca][modelo][anio] = [];
+            
+            db[marca][modelo][anio].push({
+                pais: pais,
+                valor: valor,
+                espec: espec,
+                traccion: traccion
+            });
+            totalCount++;
+        }
+        
+        const statusSpan = document.getElementById('db-status');
+        if (totalCount > 0) {
+            statusSpan.innerHTML = `🟢 BD Activa: ${totalCount} versiones listas`;
+            statusSpan.style.color = '#10b981';
+        } else {
+            statusSpan.innerHTML = `🔴 Error de datos`;
+            statusSpan.style.color = '#ef4444';
+        }
+        
+        const mSel = document.getElementById('marca');
+        mSel.innerHTML = '<option value="">Seleccione...</option>';
+        Object.keys(db).sort().forEach(m => mSel.options.add(new Option(m, m)));
+        
+        document.getElementById('modelo').innerHTML = '<option value="">Seleccione...</option>';
+        document.getElementById('anio').innerHTML = '<option value="">Seleccione...</option>';
+        document.getElementById('version').innerHTML = '<option value="">Seleccione...</option>';
+        
+        calc();
+    }
+
+    function updateModels() {
+        const m = document.getElementById('marca').value;
+        const modSel = document.getElementById('modelo');
+        modSel.innerHTML = '<option value="">Seleccione...</option>';
+        document.getElementById('anio').innerHTML = '<option value="">Seleccione...</option>';
+        document.getElementById('version').innerHTML = '<option value="">Seleccione...</option>';
+        
+        if (db[m]) {
+            Object.keys(db[m]).sort().forEach(mod => modSel.options.add(new Option(mod, mod)));
+        }
+        calc();
+    }
+
+    function updateYears() {
+        const m = document.getElementById('marca').value;
+        const mod = document.getElementById('modelo').value;
+        const aSel = document.getElementById('anio');
+        aSel.innerHTML = '<option value="">Seleccione...</option>';
+        document.getElementById('version').innerHTML = '<option value="">Seleccione...</option>';
+        
+        if (db[m] && db[m][mod]) {
+            Object.keys(db[m][mod]).sort((a, b) => b - a).forEach(a => aSel.options.add(new Option(a, a)));
+        }
+        calc();
+    }
+
+    function updateVersions() {
+        const m = document.getElementById('marca').value;
+        const mod = document.getElementById('modelo').value;
+        const a = document.getElementById('anio').value;
+        const vSel = document.getElementById('version');
+        vSel.innerHTML = '<option value="">Seleccione...</option>';
+        
+        if (db[m] && db[m][mod] && db[m][mod][a]) {
+            const versions = db[m][mod][a];
+            versions.forEach((v, index) => {
+                let text = '';
+                if (v.traccion) text += `[${v.traccion.toUpperCase()}] `;
+                text += v.pais ? v.pais : 'BASE';
+                if (v.espec) {
+                    let cleanSpec = v.espec.split('||')[0].trim();
+                    text += ` - ${cleanSpec}`;
+                }
+                vSel.options.add(new Option(text, index));
+            });
+            
+            if (versions.length === 1) {
+                vSel.selectedIndex = 1;
+                setAutoPrice();
+            }
+        }
+        calc();
+    }
+
+    function setAutoPrice() {
+        const m = document.getElementById('marca').value;
+        const mod = document.getElementById('modelo').value;
+        const a = document.getElementById('anio').value;
+        const vIdx = document.getElementById('version').value;
+        
+        if (db[m] && db[m][mod] && db[m][mod][a] && vIdx !== "") {
+            const item = db[m][mod][a][vIdx];
+            document.getElementById('valor').value = item.valor;
+        }
+        calc();
+    }
+
+    function calc() {
+        const v = parseFloat(document.getElementById('valor').value) || 0;
+        const f = parseFloat(document.getElementById('flete').value) || 0;
+        const s = parseFloat(document.getElementById('seguro').value) || 0;
+        const t = parseFloat(document.getElementById('tasa').value) || 60.60;
+        const pArancel = parseFloat(document.getElementById('tratado').value);
+
+        const tasaServiciosYDUA = 8912.44 + 258.26;
+        const parqueoSansouci = 5713.61;
+
+        const cifUsd = v + f + s;
+        const cifRds = cifUsd * t;
+        
+        const arancel = cifRds * pArancel;
+        const itbis = (cifRds + arancel) * 0.18;
+        const subtotalAduanas = arancel + itbis;
+
+        const placa = cifRds * 0.17;
+        const co2 = cifRds * 0.02;
+        const subtotalPlaca = placa + co2 + 3000;
+        
+        const despachoSinPlaca = subtotalAduanas + tasaServiciosYDUA + parqueoSansouci;
+        const totalGeneral = despachoSinPlaca + subtotalPlaca;
+
+        const clienteVal = document.getElementById('cliente').value.trim();
+        const boxCliente = document.getElementById('box-cliente');
+        if (clienteVal) {
+            boxCliente.style.display = "flex";
+            document.getElementById('lblCliente').innerText = clienteVal.toUpperCase();
+        } else {
+            boxCliente.style.display = "none";
+        }
+
+        const vinVal = document.getElementById('vin').value.trim();
+        const boxVin = document.getElementById('box-vin');
+        if (vinVal) {
+            boxVin.style.display = "flex";
+            document.getElementById('lblVin').innerText = vinVal.toUpperCase();
+        } else {
+            boxVin.style.display = "none";
+        }
+
+        const marcaSel = document.getElementById('marca');
+        const modeloSel = document.getElementById('modelo');
+        const anioSel = document.getElementById('anio');
+        const versionSel = document.getElementById('version');
+
+        const marcaText = marcaSel.options[marcaSel.selectedIndex] ? marcaSel.options[marcaSel.selectedIndex].text : "";
+        const modeloText = modeloSel.options[modeloSel.selectedIndex] ? modeloSel.options[modeloSel.selectedIndex].text : "";
+        const anioText = anioSel.options[anioSel.selectedIndex] ? anioSel.options[anioSel.selectedIndex].text : "";
+        const versionText = versionSel.options[versionSel.selectedIndex] ? versionSel.options[versionSel.selectedIndex].text : "";
+
+        let txtVehiculo = "POR ESPECIFICAR";
+        if (marcaText && marcaText !== "Seleccione...") {
+            let m = marcaText;
+            let mo = (modeloText === "Seleccione...") ? "" : modeloText;
+            let a = (anioText === "Seleccione...") ? "" : anioText;
+            let vText = (versionText === "Seleccione..." || !versionText) ? "" : `(${versionText})`;
+            txtVehiculo = `${m} ${mo} ${a} ${vText}`.trim().replace(/\s+/g, ' ');
+        }
+        
+        window.currentVehiculo = txtVehiculo.toUpperCase();
+        window.currentCif = cifUsd;
+        window.currentSinPlaca = despachoSinPlaca;
+        window.currentTotal = totalGeneral;
+        window.currentCliente = clienteVal;
+
+        document.getElementById('lblVehiculo').innerText = window.currentVehiculo;
+        document.getElementById('lblCif').innerText = 'US$ ' + fmt(cifUsd);
+        document.getElementById('lblPorcentajeGravamen').innerText = pArancel === 0 ? "0" : "10";
+        document.getElementById('rArancel').innerText = fmt(arancel);
+        document.getElementById('rItbis').innerText = fmt(itbis);
+        document.getElementById('rSubAduana').innerText = fmt(subtotalAduanas);
+        document.getElementById('rPlaca').innerText = fmt(placa);
+        document.getElementById('rCo2').innerText = fmt(co2);
+        document.getElementById('rSubPlaca').innerText = fmt(subtotalPlaca);
+        document.getElementById('rTotal').innerText = fmt(totalGeneral);
+
+        let fileNameParts = ["NEXT"];
+        if (clienteVal) fileNameParts.push(clienteVal.toUpperCase().replace(/[^A-Z0-9]/g, '_'));
+        if (txtVehiculo !== "POR ESPECIFICAR") fileNameParts.push(txtVehiculo.toUpperCase().replace(/[^A-Z0-9]/g, '_'));
+        if (vinVal && vinVal.length >= 6) fileNameParts.push(vinVal.slice(-6).toUpperCase());
+        if (fileNameParts.length === 1) fileNameParts.push("COTIZACION_" + Math.floor(1000 + Math.random() * 9000));
+        document.title = fileNameParts.join('_');
+    }
+
+    function enviarWhatsApp() {
+        if (window.currentVehiculo === "POR ESPECIFICAR") {
+            alert("Por favor, selecciona al menos la marca y el modelo del vehículo antes de enviar.");
+            return;
+        }
+
+        let saludo = window.currentCliente ? `¡Hola ${window.currentCliente}! 👋` : `¡Hola! 👋`;
+        let texto = `${saludo} Aquí tienes el presupuesto estimado de tu próximo vehículo desde *Next GB Auto Import*:\n\n` +
+                    `🚘 *Vehículo:* ${window.currentVehiculo}\n` +
+                    `💵 *Costo CIF Total:* US$ ${fmt(window.currentCif)}\n` +
+                    `⚓ *Despacho Aduana (Sin Placa):* RD$ ${fmt(window.currentSinPlaca)}\n` +
+                    `🏁 *Total Estimado (Con Placa Incluida):* RD$ ${fmt(window.currentTotal)}\n\n` +
+                    `_(Nota: El costo de la placa se liquida formalmente una vez vendido el vehículo)._\n\n` +
+                    `¡Quedamos a tu orden para cualquier consulta! 🚀`;
+
+        let url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+        window.open(url, '_blank');
+    }
+
+    window.onload = function() {
+        const savedCSV = localStorage.getItem('nextgb_csv_data');
+        if (savedCSV) {
+            processCSV(savedCSV);
+        } else {
+            const sampleCSV = `Marca,Modelo,Año,País,Tracción,Valor,Especificaciones
+Honda,CR-V,2024,USA,AWD,28500,SERIE: TOURING
+Honda,CR-V,2024,USA,FWD,26000,SERIE: EX-L
+Toyota,RAV4,2024,USA,AWD,29000,SERIE: XLE PREMIUM`;
+            processCSV(sampleCSV);
+            
+            const statusSpan = document.getElementById('db-status');
+            statusSpan.innerHTML = `⚠️ Esperando tu archivo Excel .CSV`;
+            statusSpan.style.color = '#f59e0b';
+        }
+    }
+</script>
+</body>
+</html>
