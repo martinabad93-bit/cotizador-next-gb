@@ -87,6 +87,7 @@
         .res-line { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
         .res-line span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
         .subtotal-line { font-weight: 700; border-bottom: 1px solid var(--text); padding-top: 14px; }
+        .highlight-subtotal { background-color: rgba(37, 99, 235, 0.05); padding: 12px 10px; border-radius: 8px; border-bottom: 2px solid var(--accent); margin-top: 5px;}
 
         .total-box { 
             margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 14px; text-align: center; 
@@ -124,6 +125,7 @@
             h1 { text-align: center !important; font-size: 13pt !important; border: none !important; margin-top: 25px !important; margin-bottom: 15px !important; color: #1e293b !important; text-decoration: underline; }
             .res-line { border-bottom: 1px solid #e2e8f0 !important; padding: 10px 5px !important; }
             .subtotal-line { font-weight: 800 !important; border-bottom: 2px solid #1e293b !important; background-color: #f8fafc !important; padding: 10px 5px !important; }
+            .highlight-subtotal { background-color: #e2e8f0 !important; border-bottom: 2px solid #1e293b !important; font-weight: 800 !important;}
             .total-box { background: #1e293b !important; color: #ffffff !important; border-radius: 12px !important; box-shadow: none; margin-top: 25px !important; padding: 20px !important; }
             .total-box h2 { color: #ffffff !important; font-size: 26pt !important; }
             .print-footer { display: block !important; margin-top: 50px; }
@@ -271,7 +273,7 @@
         
         <div class="res-line" style="margin-top: 10px;"><span>Tasa Servicio Aduanero / DUA</span><span>8,912.44 + 258.26</span></div>
         <div class="res-line"><span>Parqueo Puerto Sansouci</span><span>5,713.61</span></div>
-        <div class="res-line subtotal-line"><span>⚓ Total Operación de Puerto</span><span id="rTotalPuerto">14,884.31</span></div>
+        <div class="res-line highlight-subtotal"><span>⚓ Total Despacho Aduanal (Sin Placa)</span><span id="rDespachoSinPlaca">0.00</span></div>
         
         <div class="res-line" style="margin-top: 10px;"><span>Primera Placa (17% CIF)</span><span id="rPlaca">0.00</span></div>
         <div class="res-line"><span>Emisión de CO2 (2% CIF)</span><span id="rCo2">0.00</span></div>
@@ -523,6 +525,7 @@
         const co2 = cifRds * 0.02;
         const subtotalPlaca = placa + co2 + 3000;
         
+        // Suma de Aduanas + Puerto = Total a pagar para retirar el vehículo
         const despachoSinPlaca = subtotalAduanas + tasaServiciosYDUA + parqueoSansouci;
         const totalGeneral = despachoSinPlaca + subtotalPlaca;
 
@@ -579,6 +582,10 @@
         document.getElementById('rArancel').innerText = fmt(arancel);
         document.getElementById('rItbis').innerText = fmt(itbis);
         document.getElementById('rSubAduana').innerText = fmt(subtotalAduanas);
+        
+        // Mostramos en pantalla el resultado de la suma dinámica de impuestos y puerto
+        document.getElementById('rDespachoSinPlaca').innerText = fmt(despachoSinPlaca);
+        
         document.getElementById('rPlaca').innerText = fmt(placa);
         document.getElementById('rCo2').innerText = fmt(co2);
         document.getElementById('rSubPlaca').innerText = fmt(subtotalPlaca);
