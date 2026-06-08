@@ -18,6 +18,7 @@
             --accent: #2563eb;
             --wa: #25D366;
             --danger: #ef4444;
+            --success: #10b981;
         }
 
         .dark-mode {
@@ -28,6 +29,7 @@
             --primary: #3b82f6;
             --border: #374151;
             --accent: #60a5fa;
+            --success: #34d399;
         }
 
         body { 
@@ -45,6 +47,55 @@
             display: grid; 
             grid-template-columns: 1.2fr 1fr; 
             gap: 40px; 
+        }
+
+        /* TABS SYSTEM */
+        .tabs-nav {
+            grid-column: 1 / -1; 
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+        
+        .tab-btn {
+            background: transparent;
+            border: 2px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 14px;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .tab-btn:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+        
+        .tab-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .card { 
@@ -95,12 +146,13 @@
         .dark-mode .total-box { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
         .total-box small { text-transform: uppercase; letter-spacing: 2px; font-size: 11px; display: block; margin-bottom: 5px; opacity: 0.8; }
         .total-box h2 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+        
+        .success-box { background: linear-gradient(135deg, #059669, #047857) !important; }
 
         .btn-action { background: var(--text); color: var(--card); border: none; padding: 14px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 13px; transition: opacity 0.2s; }
         .btn-action:hover { opacity: 0.9; }
         .btn-wa { background: var(--wa); color: #ffffff; }
 
-        /* DB Control Styling */
         .db-panel { margin-top: 25px; padding-top: 20px; border-top: 2px dashed var(--border); }
         .db-flex { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; background: var(--bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border); flex-wrap: wrap;}
         .db-btns { display: flex; gap: 8px; }
@@ -113,7 +165,9 @@
            ========================================================= */
         @media print {
             body { background: #ffffff !important; color: #000000 !important; padding: 0 !important; font-size: 11pt !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
             .no-print { display: none !important; }
+            
             .app-container { display: block; width: 100%; }
             .card { border: none !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; }
             .logo-container { text-align: left; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #1e293b; padding-bottom: 15px; }
@@ -129,9 +183,10 @@
             .total-box { background: #1e293b !important; color: #ffffff !important; border-radius: 12px !important; box-shadow: none; margin-top: 25px !important; padding: 20px !important; }
             .total-box h2 { color: #ffffff !important; font-size: 26pt !important; }
             .print-footer { display: block !important; margin-top: 50px; }
-            .print-signatures { display: flex; justify-content: space-around; margin-bottom: 40px; }
-            .sig-line { border-top: 1px solid #1e293b; width: 220px; text-align: center; padding-top: 8px; font-weight: bold; font-size: 9pt; color: #1e293b; }
             .legal-disclaimer { font-size: 8pt; color: #64748b; text-align: justify; border-top: 1px solid #e2e8f0; padding-top: 15px; line-height: 1.4; }
+            
+            .tab-content { display: none !important; }
+            .card:not(.no-print) .tab-content.active { display: block !important; }
         }
     </style>
 </head>
@@ -140,8 +195,14 @@
 <button class="theme-switch no-print" onclick="document.body.classList.toggle('dark-mode')">🌓 Cambiar Interfaz</button>
 
 <div class="app-container">
-    <div class="card no-print">
-        <h1>Entrada de Inventario</h1>
+    
+    <div class="tabs-nav no-print">
+        <button class="tab-btn active" onclick="openTab('tab-aduanas')">1. Impuestos Aduanales</button>
+        <button class="tab-btn" onclick="openTab('tab-costos')">2. Costo Final & Rentabilidad</button>
+    </div>
+
+    <div id="tab-aduanas" class="card no-print tab-content active">
+        <h1>Entrada de Inventario y DGA</h1>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div class="input-group">
@@ -183,7 +244,7 @@
             </div>
             <div class="input-group">
                 <label>Tasa Cambiaria DGA</label>
-                <input type="number" id="tasa" value="60.60" step="0.1" oninput="calc()">
+                <input type="number" id="tasa" value="60.60" step="0.1" oninput="calc(); calcCostos();">
             </div>
         </div>
         
@@ -219,8 +280,75 @@
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
-            <button class="btn-action" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="btn-action" onclick="window.print()">🖨️ Imprimir Presupuesto</button>
             <button class="btn-action btn-wa" onclick="enviarWhatsApp()">📲 Enviar por WhatsApp</button>
+        </div>
+    </div>
+
+    <div id="tab-costos" class="card no-print tab-content">
+        <h1>Calculadora de Inversión y Rentabilidad</h1>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-top: -15px; margin-bottom: 25px;">
+            Determina el costo real de aterrizaje de la unidad y analiza los beneficios netos de la operación comercial.
+        </p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="input-group">
+                <label>Compra en Subasta (USD$)</label>
+                <input type="number" id="costo_subasta" value="0" placeholder="Ej. 3500" oninput="calcCostos()">
+            </div>
+            <div class="input-group">
+                <label>Auction Fees (Copart/IAAI) (USD$)</label>
+                <input type="number" id="fees_subasta" value="0" placeholder="Ej. 650" oninput="calcCostos()">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="input-group">
+                <label>Grúa Inland a Puerto (USD$)</label>
+                <input type="number" id="grua_inland" value="0" placeholder="Ej. 300" oninput="calcCostos()">
+            </div>
+            <div class="input-group">
+                <label>Flete Marítimo Real (USD$)</label>
+                <input type="number" id="flete_real" value="790" oninput="calcCostos()">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="input-group">
+                <label>Documentación (USD$)</label>
+                <input type="number" id="documentacion_usd" value="0" placeholder="Ej. 150" oninput="calcCostos()">
+            </div>
+            <div class="input-group">
+                <label>Partes, Piezas o Taller Miami (USD$)</label>
+                <input type="number" id="taller_miami_usd" value="0" placeholder="Ej. 500" oninput="calcCostos()">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="input-group">
+                <label>Fee Broker (USD$)</label>
+                <input type="number" id="fee_broker_usd" value="0" placeholder="Ej. 250" oninput="calcCostos()">
+            </div>
+            <div class="input-group">
+                <label>Reparación en RD (RD$)</label>
+                <input type="number" id="reparaciones_rds" value="0" placeholder="Ej. 25000" oninput="calcCostos()">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Total Aduana y Puerto (Incluida Placa) (RD$)</label>
+            <input type="number" id="aduanas_real_rds" value="0" oninput="calcCostos()" style="background-color: var(--border); font-weight: bold;">
+            <small style="font-size: 10px; color: var(--accent); cursor: pointer;" onclick="syncAduanas()">🔄 Clic para resincronizar DGA total con Placa</small>
+        </div>
+
+        <div class="input-group" style="margin-top: 10px;">
+            <label style="color: var(--success); font-size: 13px;">Precio Estimado de Venta (USD$)</label>
+            <input type="number" id="precio_venta_estimado_usd" value="0" placeholder="Ej. 14500" oninput="calcCostos()" style="border-color: var(--success); border-width: 2px;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
+            <button class="btn-action" onclick="window.print()">🖨️ Imprimir Costos</button>
+            <button class="btn-action btn-wa" onclick="enviarWhatsAppCostos()">📲 Enviar Info Interna</button>
         </div>
     </div>
 
@@ -260,40 +388,73 @@
                 <strong id="lblVin">--</strong>
             </div>
             <div class="info-item">
-                <span>💵 Costo CIF Total</span>
-                <strong id="lblCif" style="color: #2563eb; font-weight: 700;">US$ 0.00</strong>
+                <span>💱 Tasa de Cambio</span>
+                <strong id="lblTasaGlobal" style="color: var(--text-secondary);">60.60</strong>
             </div>
         </div>
 
-        <h1>Desglose Oficial de Impuestos RD$</h1>
-        
-        <div class="res-line"><span>Arancel de Aduana (<span id="lblPorcentajeGravamen">10</span>%)</span><span id="rArancel">0.00</span></div>
-        <div class="res-line"><span>ITBIS Liquidación (18%)</span><span id="rItbis">0.00</span></div>
-        <div class="res-line subtotal-line"><span>Total Impuestos Aduanales</span><span id="rSubAduana">0.00</span></div>
-        
-        <div class="res-line" style="margin-top: 10px;"><span>Tasa Servicio Aduanero / DUA</span><span>8,912.44 + 258.26</span></div>
-        <div class="res-line"><span>Parqueo Puerto Sansouci</span><span>5,713.61</span></div>
-        <div class="res-line highlight-subtotal"><span>⚓ Total Despacho Aduanal (Sin Placa)</span><span id="rDespachoSinPlaca">0.00</span></div>
-        
-        <div class="res-line" style="margin-top: 10px;"><span>Primera Placa (17% CIF)</span><span id="rPlaca">0.00</span></div>
-        <div class="res-line"><span>Emisión de CO2 (2% CIF)</span><span id="rCo2">0.00</span></div>
-        <div class="res-line"><span>Marbete Ley</span><span>3,000.00</span></div>
-        <div class="res-line subtotal-line"><span>Total Costos de Placa</span><span id="rSubPlaca">0.00</span></div>
-        
-        <div class="total-box">
-            <small>🏁 Total General Estimado DGA</small>
-            <h2 id="rTotal">0.00</h2>
+        <div id="res-aduanas" class="tab-content active">
+            <h1>Desglose Oficial de Impuestos RD$</h1>
+            
+            <div class="res-line"><span>Arancel de Aduana (<span id="lblPorcentajeGravamen">10</span>%)</span><span id="rArancel">0.00</span></div>
+            <div class="res-line"><span>ITBIS Liquidación (18%)</span><span id="rItbis">0.00</span></div>
+            <div class="res-line subtotal-line"><span>Total Impuestos Aduanales</span><span id="rSubAduana">0.00</span></div>
+            
+            <div class="res-line" style="margin-top: 10px;"><span>Tasa Servicio Aduanero / DUA</span><span>8,912.44 + 258.26</span></div>
+            <div class="res-line"><span>Parqueo Puerto Sansouci</span><span>5,713.61</span></div>
+            <div class="res-line highlight-subtotal"><span>⚓ Total Despacho Aduanal (Sin Placa)</span><span id="rDespachoSinPlaca">0.00</span></div>
+            
+            <div class="res-line" style="margin-top: 10px;"><span>Primera Placa (17% CIF)</span><span id="rPlaca">0.00</span></div>
+            <div class="res-line"><span>Emisión de CO2 (2% CIF)</span><span id="rCo2">0.00</span></div>
+            <div class="res-line"><span>Marbete Ley</span><span>3,000.00</span></div>
+            <div class="res-line subtotal-line"><span>Total Costos de Placa</span><span id="rSubPlaca">0.00</span></div>
+            
+            <div class="total-box">
+                <small>🏁 Total General Estimado DGA</small>
+                <h2 id="rTotal">0.00</h2>
+            </div>
+            
+            <div class="print-footer">
+                <div class="print-signatures">
+                    <div class="sig-line">Aceptado por el Cliente</div>
+                    <div class="sig-line">Asesor Comercial Next GB</div>
+                </div>
+                <div class="legal-disclaimer">
+                    * NOTA FISCAL ADUANERA: Esta simulación representa una estimación de costos basada en las regulaciones de la Dirección General de Aduanas (DGA). Los montos definitivos de Arancel, ITBIS y Placa se liquidarán oficialmente en ventanilla aduanera única en base a la tasa de cambio del día y las tablas de tasación vigentes aplicadas por el inspector asignado al momento físico de la importación en puerto dominicano.
+                </div>
+            </div>
         </div>
 
-        <div class="print-footer">
-            <div class="print-signatures">
-                <div class="sig-line">Aceptado por el Cliente</div>
-                <div class="sig-line">Asesor Comercial Next GB</div>
+        <div id="res-costos" class="tab-content">
+            <h1>Estructura de Inversión y Rentabilidad</h1>
+            
+            <div class="res-line"><span>Subasta y Fees (Origen)</span><span id="rc_origen">US$ 0.00</span></div>
+            <div class="res-line"><span>Logística (Grúa + Flete)</span><span id="rc_logistica">US$ 0.00</span></div>
+            <div class="res-line"><span>Documentación y Taller Miami</span><span id="rc_docs_miami">US$ 0.00</span></div>
+            <div class="res-line"><span>Fee Broker</span><span id="rc_fee_broker">US$ 0.00</span></div>
+            <div class="res-line highlight-subtotal"><span>Total Gastos en Origen (USD)</span><span id="rc_total_origen_usd">US$ 0.00</span></div>
+            
+            <div class="res-line" style="margin-top: 10px;"><span>Aduanas, Puerto y Placa (RD$)</span><span id="rc_aduanas">RD$ 0.00</span></div>
+            <div class="res-line"><span>Reparación en RD (RD$)</span><span id="rc_reparaciones">RD$ 0.00</span></div>
+            <div class="res-line subtotal-line"><span>Total Local (RD$)</span><span id="rc_total_local">RD$ 0.00</span></div>
+            
+            <div class="res-line highlight-subtotal" style="margin-top: 10px;">
+                <span>Costo Total del Vehículo (Landed Cost)</span>
+                <span id="rc_landed_usd" style="color: var(--danger); font-weight: bold;">US$ 0.00</span>
             </div>
-            <div class="legal-disclaimer">
-                * NOTA FISCAL ADUANERA: Esta simulación representa una estimación de costos basada en las regulaciones de la Dirección General de Aduanas (DGA). Los montos definitivos de Arancel, ITBIS y Placa se liquidarán oficialmente en ventanilla aduanera única en base a la tasa de cambio del día y las tablas de tasación vigentes aplicadas por el inspector asignado al momento físico de la importación en puerto dominicano.
+            
+            <div class="res-line" style="margin-top: 10px;">
+                <span>Precio Estimado de Venta</span>
+                <span id="rc_precio_venta_usd" style="color: var(--primary); font-weight: bold;">US$ 0.00</span>
+            </div>
+
+            <div class="total-box success-box">
+                <small>💰 Margen de Comercialización Neta</small>
+                <h2 id="rc_margen_neto_usd">US$ 0.00</h2>
+                <div style="font-size: 16px; margin-top: 8px; opacity: 0.9;" id="rc_margen_neto_rds">RD$ 0.00</div>
             </div>
         </div>
+
     </div>
 </div>
 
@@ -302,6 +463,23 @@
     const fmt = n => new Intl.NumberFormat('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}).format(n);
 
     document.getElementById('print-date').innerText = 'Fecha: ' + new Date().toLocaleDateString('es-DO');
+
+    // NAVEGACIÓN DE PESTAÑAS
+    function openTab(tabId) {
+        document.querySelectorAll('.app-container > .tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('#res-aduanas, #res-costos').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+
+        if(tabId === 'tab-aduanas') {
+            document.getElementById('res-aduanas').classList.add('active');
+        } else if (tabId === 'tab-costos') {
+            document.getElementById('res-costos').classList.add('active');
+            syncAduanas(); 
+        }
+    }
 
     function limpiarDB() {
         if(confirm("¿Estás seguro de borrar la base de datos almacenada? Tendrás que cargar un archivo CSV nuevamente.")){
@@ -392,9 +570,9 @@
             const pais = idxPais !== -1 ? parts[idxPais] : '';
             const valorRaw = idxValor !== -1 ? parts[idxValor] : '0';
             const traccion = idxTraccion !== -1 ? parts[idxTraccion] : '';
-            let espec = idxEspec !== -1 ? parts[idxEspec] : '';
+            let spec = idxEspec !== -1 ? parts[idxEspec] : '';
             
-            espec = espec.replace(/\|+$/, '').replace(/^\|+/, '').trim();
+            spec = spec.replace(/\|+$/, '').replace(/^\|+/, '').trim();
             const valor = parseFloat(valorRaw.replace(/[^0-9.-]+/g, '')) || 0;
             
             if (!db[marca]) db[marca] = {};
@@ -404,7 +582,7 @@
             db[marca][modelo][anio].push({
                 pais: pais,
                 valor: valor,
-                espec: espec,
+                espec: spec,
                 traccion: traccion
             });
             totalCount++;
@@ -504,6 +682,13 @@
         calc();
     }
 
+    function syncAduanas() {
+        if(window.currentTotal) {
+            document.getElementById('aduanas_real_rds').value = window.currentTotal.toFixed(2);
+        }
+        calcCostos();
+    }
+
     function calc() {
         const v = parseFloat(document.getElementById('valor').value) || 0;
         const f = parseFloat(document.getElementById('flete').value) || 0;
@@ -525,7 +710,6 @@
         const co2 = cifRds * 0.02;
         const subtotalPlaca = placa + co2 + 3000;
         
-        // Suma de Aduanas + Puerto = Total a pagar para retirar el vehículo
         const despachoSinPlaca = subtotalAduanas + tasaServiciosYDUA + parqueoSansouci;
         const totalGeneral = despachoSinPlaca + subtotalPlaca;
 
@@ -571,21 +755,18 @@
         window.currentSinPlaca = despachoSinPlaca;
         window.currentTotal = totalGeneral;
         window.currentCliente = clienteVal;
-        
-        // Nuevas variables globales para WhatsApp
         window.currentPlaca = subtotalPlaca;
         window.currentTratado = pArancel === 0 ? "Sí (0% Arancel)" : "No (10% Gravamen)";
 
         document.getElementById('lblVehiculo').innerText = window.currentVehiculo;
-        document.getElementById('lblCif').innerText = 'US$ ' + fmt(cifUsd);
+        document.getElementById('lblTasaGlobal').innerText = t.toFixed(2);
+        
+        // Resultados DGA Pestaña 1
         document.getElementById('lblPorcentajeGravamen').innerText = pArancel === 0 ? "0" : "10";
         document.getElementById('rArancel').innerText = fmt(arancel);
         document.getElementById('rItbis').innerText = fmt(itbis);
         document.getElementById('rSubAduana').innerText = fmt(subtotalAduanas);
-        
-        // Mostramos en pantalla el resultado de la suma dinámica de impuestos y puerto
         document.getElementById('rDespachoSinPlaca').innerText = fmt(despachoSinPlaca);
-        
         document.getElementById('rPlaca').innerText = fmt(placa);
         document.getElementById('rCo2').innerText = fmt(co2);
         document.getElementById('rSubPlaca').innerText = fmt(subtotalPlaca);
@@ -597,6 +778,59 @@
         if (vinVal && vinVal.length >= 6) fileNameParts.push(vinVal.slice(-6).toUpperCase());
         if (fileNameParts.length === 1) fileNameParts.push("COTIZACION_" + Math.floor(1000 + Math.random() * 9000));
         document.title = fileNameParts.join('_');
+        
+        if(parseFloat(document.getElementById('flete_real').value) === 0) {
+            document.getElementById('flete_real').value = f;
+        }
+    }
+
+    function calcCostos() {
+        const subasta = parseFloat(document.getElementById('costo_subasta').value) || 0;
+        const fees = parseFloat(document.getElementById('fees_subasta').value) || 0;
+        const inland = parseFloat(document.getElementById('grua_inland').value) || 0;
+        const flete = parseFloat(document.getElementById('flete_real').value) || 0;
+        
+        const documentacion = parseFloat(document.getElementById('documentacion_usd').value) || 0;
+        const tallerMiami = parseFloat(document.getElementById('taller_miami_usd').value) || 0;
+        const feeBroker = parseFloat(document.getElementById('fee_broker_usd').value) || 0;
+        
+        const aduanasRds = parseFloat(document.getElementById('aduanas_real_rds').value) || 0;
+        const reparacionesRds = parseFloat(document.getElementById('reparaciones_rds').value) || 0;
+        
+        const precioVentaUsd = parseFloat(document.getElementById('precio_venta_estimado_usd').value) || 0;
+        const t = parseFloat(document.getElementById('tasa').value) || 60.60;
+        
+        const subtotalOrigen = subasta + fees;
+        const subtotalLogistica = inland + flete;
+        const subtotalDocsMiami = documentacion + tallerMiami;
+        const totalGastosOrigenUsd = subtotalOrigen + subtotalLogistica + subtotalDocsMiami + feeBroker;
+        
+        const totalDestinoRds = aduanasRds + reparacionesRds;
+        
+        const landedCostUsd = totalGastosOrigenUsd + (totalDestinoRds / t);
+        
+        const margenComercializacionUsd = precioVentaUsd - landedCostUsd;
+        const margenComercializacionRds = margenComercializacionUsd * t;
+        
+        window.c_landed = landedCostUsd;
+        window.c_venta = precioVentaUsd;
+        window.c_margen = margenComercializacionUsd;
+
+        document.getElementById('rc_origen').innerText = "US$ " + fmt(subtotalOrigen);
+        document.getElementById('rc_logistica').innerText = "US$ " + fmt(subtotalLogistica);
+        document.getElementById('rc_docs_miami').innerText = "US$ " + fmt(subtotalDocsMiami);
+        document.getElementById('rc_fee_broker').innerText = "US$ " + fmt(feeBroker);
+        document.getElementById('rc_total_origen_usd').innerText = "US$ " + fmt(totalGastosOrigenUsd);
+        
+        document.getElementById('rc_aduanas').innerText = "RD$ " + fmt(aduanasRds);
+        document.getElementById('rc_reparaciones').innerText = "RD$ " + fmt(reparacionesRds);
+        document.getElementById('rc_total_local').innerText = "RD$ " + fmt(totalDestinoRds);
+        
+        document.getElementById('rc_landed_usd').innerText = "US$ " + fmt(landedCostUsd);
+        document.getElementById('rc_precio_venta_usd').innerText = "US$ " + fmt(precioVentaUsd);
+        
+        document.getElementById('rc_margen_neto_usd').innerText = "US$ " + fmt(margenComercializacionUsd);
+        document.getElementById('rc_margen_neto_rds').innerText = "RD$ " + fmt(margenComercializacionRds);
     }
 
     function enviarWhatsApp() {
@@ -620,6 +854,28 @@
         window.open(url, '_blank');
     }
 
+    function enviarWhatsAppCostos() {
+        let vehiculo = window.currentVehiculo !== "POR ESPECIFICAR" ? window.currentVehiculo : "Vehículo en Análisis";
+        let t = parseFloat(document.getElementById('tasa').value) || 60.60;
+        
+        let texto = `📊 *REPORTE INTERNO DE RENDIMIENTO Y MARGEN*\n*Next GB Auto Import*\n\n` +
+                    `🚘 *Unidad:* ${vehiculo}\n\n` +
+                    `🔨 *Subasta + Fees:* US$ ${fmt(parseFloat(document.getElementById('costo_subasta').value)||0 + parseFloat(document.getElementById('fees_subasta').value)||0)}\n` +
+                    `🚢 *Logística (Grúa+Flete):* US$ ${fmt(parseFloat(document.getElementById('grua_inland').value)||0 + parseFloat(document.getElementById('flete_real').value)||0)}\n` +
+                    `📄 *Documentación:* US$ ${fmt(parseFloat(document.getElementById('documentacion_usd').value)||0)}\n` +
+                    `🔧 *Taller Miami:* US$ ${fmt(parseFloat(document.getElementById('taller_miami_usd').value)||0)}\n` +
+                    `💼 *Fee Broker:* US$ ${fmt(parseFloat(document.getElementById('fee_broker_usd').value)||0)}\n` +
+                    `🏢 *Aduana, Puerto + Placa:* RD$ ${fmt(parseFloat(document.getElementById('aduanas_real_rds').value)||0)}\n` +
+                    `🇩🇴 *Reparación en RD:* RD$ ${fmt(parseFloat(document.getElementById('reparaciones_rds').value)||0)}\n\n` +
+                    `📉 *LANDED COST TOTAL:* US$ ${fmt(window.c_landed || 0)}\n` +
+                    `💵 *PRECIO DE VENTA ESTIMADO:* US$ ${fmt(window.c_venta || 0)}\n\n` +
+                    `💰 *MARGEN DE COMERCIALIZACIÓN:* US$ ${fmt(window.c_margen || 0)}\n` +
+                    `*(RD$ ${fmt((window.c_margen || 0) * t)})*\n`;
+
+        let url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+        window.open(url, '_blank');
+    }
+
     window.onload = function() {
         const savedCSV = localStorage.getItem('nextgb_csv_data');
         if (savedCSV) {
@@ -635,6 +891,9 @@ Toyota,RAV4,2024,USA,AWD,29000,SERIE: XLE PREMIUM`;
             statusSpan.innerHTML = `⚠️ Esperando tu archivo Excel .CSV`;
             statusSpan.style.color = '#f59e0b';
         }
+        
+        calc();
+        calcCostos();
     }
 </script>
 </body>
